@@ -5,6 +5,9 @@
  */
 package performanceassessment;
 
+import java.util.Locale;
+import java.util.ResourceBundle;
+import performanceassessment.*;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -19,7 +22,9 @@ public class PerformanceAssessment extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("FXMLDocument.fxml"));
+        Locale locale = Locale.getDefault();
+        ResourceBundle bundle = ResourceBundle.getBundle("resources.LangBundle_login", locale);
+        Parent root = FXMLLoader.load(getClass().getResource("View_Controller/Login.fxml"), bundle);
         
         Scene scene = new Scene(root);
         
