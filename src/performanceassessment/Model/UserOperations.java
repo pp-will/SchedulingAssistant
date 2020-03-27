@@ -13,10 +13,13 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.prefs.Preferences;
 
 /**
@@ -25,10 +28,15 @@ import java.util.prefs.Preferences;
  */
 public class UserOperations {
     
-    public static String determineSqlError(int error, String userName) {
+    public static String determineSqlError(int error) {
+        ResourceBundle bundle = ResourceBundle.getBundle("resources.LangBundle_login");
         String errorMessage;
         switch(error) {
-            case 1062: errorMessage = "Username " + userName + " is already taken!\nPlease enter a new username and try again.";
+            case 1062: errorMessage = bundle.getString("1062Error");
+            break;
+            case 1054: errorMessage = bundle.getString("1054Error");
+            break;
+            case 9999: errorMessage = bundle.getString("incorrectPassword");
             break;
             default: errorMessage = "";
         };
@@ -67,7 +75,7 @@ public class UserOperations {
         } catch(SQLException e) {
             int err = e.getErrorCode();
             System.out.println(err);
-            String errorMessage = determineSqlError(err, userName);
+            String errorMessage = determineSqlError(err);
             prefs.put("errorMessage", errorMessage);
             
         }
@@ -97,5 +105,38 @@ public class UserOperations {
         }
         
         return result;
+    }
+    
+    public static ResultSet loginUserQuery(String userName, String password) throws SQLException {
+        Connector conn = new Connector();
+        Connection db = conn.db();
+        Preferences prefs;
+        prefs = Preferences.userNodeForPackage(UserOperations.class);
+        
+        Statement statement = db.createStatement();
+        String query = "SELECT * FROM user WHERE userName = '" + userName + "'";
+        System.out.println(query);
+        ResultSet rs = null;
+        try {
+            rs = statement.executeQuery(query);
+            int rowCount = 0;
+            while(rs.next()) {
+                rowCount++;
+            } 
+            if(!password.equals(rs.getString(3))) {
+                String errorMessage = determineSqlError(9999);
+                prefs.put("errorMessage", errorMessage);
+            }
+            
+            
+            return rs;
+        } catch(SQLException e) {
+                 int err = e.getErrorCode();
+                 System.out.println(err);
+                 String errorMessage = determineSqlError(err);
+                 prefs.put("errorMessage", errorMessage);
+                 System.out.println(errorMessage);
+              }
+        return rs;
     }
 }

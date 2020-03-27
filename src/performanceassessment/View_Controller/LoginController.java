@@ -7,10 +7,13 @@ package performanceassessment.View_Controller;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.prefs.Preferences;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -25,6 +28,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import performanceassessment.Model.Connector;
 import performanceassessment.Model.NewUserValidator;
+import performanceassessment.Model.UserOperations;
 
 /**
  *
@@ -63,25 +67,27 @@ public class LoginController implements Initializable {
     }
 
     @FXML
-    void loginBtnHandler(ActionEvent event) {
+    void loginBtnHandler(ActionEvent event) throws SQLException {
         NewUserValidator validator = new NewUserValidator();
         Connector conn = new Connector();
         String userName = userInput.getText();
         String password = passwordInput.getText();
-        
+        Locale locale = Locale.getDefault();
+        ResourceBundle bundle = ResourceBundle.getBundle("resources.LangBundle_login", locale);
         List<String> errors = new ArrayList<>();
-        
+        Preferences prefs;
+        prefs = Preferences.userNodeForPackage(UserOperations.class);
         
         if(!validator.userNameLengthCheck(userName)) {
-            errors.add("Username must be between 6 and 32 characters");
+            errors.add(bundle.getString("userNameLengthError"));
         }
         if(!validator.passwordLengthCheck(password)) {
-            errors.add("Password must be between 6 and 32 characters");
+            errors.add(bundle.getString("passwordLengthError"));
         }
         
         if(errors.size() > 0) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
+            alert.setTitle(bundle.getString("errorTitle"));
             alert.setHeaderText(null);
             
             StringBuilder builder = new StringBuilder();
@@ -95,6 +101,29 @@ public class LoginController implements Initializable {
             alert.setContentText(errorString);
             errors.clear();
             alert.showAndWait();
+        } else {
+            ResultSet rs = UserOperations.loginUserQuery(userName, password);
+            int rowCount = 0;
+            while(rs.next()) {
+                rowCount++;
+            }
+            String prefsError = prefs.get("errorMessage", "");
+            if(prefsError.length() > 0) {
+                errors.add(prefsError);
+            }
+     
+            ////////////////////////////
+            ////RETHINKKKKKKKKKKK
+            /////////////
+            if(rowCount < 1) {
+                String errorMessage = prefs.get("errorMessage", "");
+            }
+            String rsPassword = rs.getString(3);
+            
+            if(!password.equals(rsPassword)) {
+                
+            }
+            
         }
     }
     
